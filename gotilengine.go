@@ -5,6 +5,7 @@ package gotilengine
 #cgo LDFLAGS: -lTilengine
 #include "Tilengine.h"
 void cRasterCallback(int line);
+void cFrameCallback(int line);
 */
 import "C"
 import (
@@ -419,7 +420,7 @@ type SpriteState struct {
 type SDL_Event = C.SDL_Event
 
 // typedef void(*TLN_VideoCallback)(int scanline);
-type VideoCallback = C.TLN_VideoCallback
+type cVideoCallback = C.TLN_VideoCallback
 
 // typedef uint8_t(*TLN_BlendFunction)(uint8_t src, uint8_t dst);
 type BlendFunction = C.TLN_BlendFunction
@@ -528,14 +529,24 @@ func convertBool(a CBool) bool {
 	return a == CTrue
 }
 
-type RasterCallback = func(line int32)
+type VideoCallback = func(line int32, userData unsafe.Pointer)
 
-var myRastercallback RasterCallback
+var myRastercallback VideoCallback
+var rasterData unsafe.Pointer = nil
+var myframeCallback VideoCallback
+var frameData unsafe.Pointer = nil
 
 //export cRasterCallback
 func cRasterCallback(line CInt) {
 	if myRastercallback != nil {
-		myRastercallback(int32(line))
+		myRastercallback(int32(line), rasterData)
+	}
+}
+
+//export cFrameCallback
+func cFrameCallback(line CInt) {
+	if myRastercallback != nil {
+		myframeCallback(int32(line), frameData)
 	}
 }
 
@@ -544,7 +555,8 @@ func cRasterCallback(line CInt) {
 func Init(hres int, vres int, numlayers int, numsprites int, numanimations int) Engine {
 	runtime.LockOSThread()
 	a := C.TLN_Init(CInt(hres), CInt(vres), CInt(numlayers), CInt(numsprites), CInt(numanimations))
-
+	setRasterCallback(cVideoCallback(C.cRasterCallback))
+	setFrameCallback(cVideoCallback(C.cFrameCallback))
 	return Engine{data: a}
 }
 
@@ -654,17 +666,23 @@ func SetGlobalPalette(index int, palette Palette) bool {
 }
 
 // TLNAPI void TLN_SetRasterCallback (TLN_VideoCallback);
-func setRasterCallback(cb VideoCallback) {
+func setRasterCallback(cb cVideoCallback) {
 	C.TLN_SetRasterCallback(cb)
 }
 
-func SetRasterCallback(cb RasterCallback) {
+func SetRasterCallback(cb VideoCallback, userData unsafe.Pointer) {
+	rasterData = userData
 	myRastercallback = cb
 }
 
 // TLNAPI void TLN_SetFrameCallback (TLN_VideoCallback);
-func SetFrameCallback(cb VideoCallback) {
+func setFrameCallback(cb cVideoCallback) {
 	C.TLN_SetFrameCallback(cb)
+}
+
+func SetFrameCallback(cb VideoCallback, userData unsafe.Pointer) {
+	frameData = userData
+	myframeCallback = cb
 }
 
 // TLNAPI void TLN_SetRenderTarget (uint8_t* data, int pitch);
@@ -731,14 +749,14 @@ func GetErrorString(error Error) string {
 // TLNAPI bool TLN_CreateWindow (const char* overlay, int flags);
 func CreateWindow(overlay string, flags int) bool {
 	a := convertBool(C.TLN_CreateWindow(C.CString(overlay), CInt(flags)))
-	setRasterCallback(VideoCallback(C.cRasterCallback))
+
 	return a
 }
 
 // TLNAPI bool TLN_CreateWindowThread (const char* overlay, int flags);
 func CreateWindowThread(overlay string, flags int) bool {
 	a := convertBool(C.TLN_CreateWindowThread(C.CString(overlay), CInt(flags)))
-	setRasterCallback(VideoCallback(C.cRasterCallback))
+
 	return a
 }
 
