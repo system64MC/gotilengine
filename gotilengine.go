@@ -717,8 +717,8 @@ func SetLogLevel(log_level LogLevel) {
 func OpenResourcePack(filename string, key string) bool {
 	cfilename := C.CString(filename)
 	ckey := C.CString(key)
-	defer C.free(cfilename)
-	defer C.free(ckey)
+	defer C.free(unsafe.Pointer(cfilename))
+	defer C.free(unsafe.Pointer(ckey))
 
 	return convertBool(C.TLN_OpenResourcePack(cfilename, ckey))
 }
