@@ -1656,8 +1656,8 @@ func createSequence(name string, target, num_frames int, frames *C.TLN_SequenceF
 	return Sequence{data: C.TLN_CreateSequence(C.CString(name), CInt(target), CInt(num_frames), frames)}
 }
 
-func CreateSequence(name string, target, num_frames int, frames *SequenceFrame) Sequence {
-	return createSequence(name, target, num_frames, (*C.TLN_SequenceFrame)(unsafe.Pointer(frames)))
+func CreateSequence(name string, target int, frames []SequenceFrame) Sequence {
+	return createSequence(name, target, len(frames), (*C.TLN_SequenceFrame)(unsafe.Pointer(&frames[0])))
 }
 
 // TLNAPI TLN_Sequence TLN_CreateCycle (const char* name, int num_strips, TLN_ColorStrip* strips);
@@ -1665,8 +1665,8 @@ func createCycle(name string, num_strips int, strips *C.TLN_ColorStrip) Sequence
 	return Sequence{data: C.TLN_CreateCycle(C.CString(name), CInt(num_strips), strips)}
 }
 
-func CreateCycle(name string, num_strips int, strips *ColorStrip) Sequence {
-	return createCycle(name, num_strips, (*C.TLN_ColorStrip)(unsafe.Pointer(strips)))
+func CreateCycle(name string, strips []ColorStrip) Sequence {
+	return createCycle(name, len(strips), (*C.TLN_ColorStrip)(unsafe.Pointer(&strips[0])))
 }
 
 // TLNAPI TLN_Sequence TLN_CreateSpriteSequence(const char* name, TLN_Spriteset spriteset, const char* basename, int delay);
