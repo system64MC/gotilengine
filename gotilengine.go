@@ -545,7 +545,7 @@ func cRasterCallback(line CInt) {
 
 //export cFrameCallback
 func cFrameCallback(line CInt) {
-	if myRastercallback != nil {
+	if myframeCallback != nil {
 		myframeCallback(int32(line), frameData)
 	}
 }
