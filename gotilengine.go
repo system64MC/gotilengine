@@ -4,6 +4,7 @@ package gotilengine
 #cgo CFLAGS: -I${SRCDIR}
 #cgo LDFLAGS: -lTilengine
 #include "Tilengine.h"
+#include <stdlib.h>
 void cRasterCallback(int line);
 void cFrameCallback(int line);
 */
@@ -697,7 +698,9 @@ func UpdateFrame(frame int) {
 
 // TLNAPI void TLN_SetLoadPath (const char* path);
 func SetLoadPath(path string) {
-	C.TLN_SetLoadPath(C.CString(path))
+	cpath := C.CString(path)
+	defer C.free(unsafe.Pointer(cpath))
+	C.TLN_SetLoadPath(cpath)
 }
 
 // TLNAPI void TLN_SetCustomBlendFunction (TLN_BlendFunction);
@@ -712,7 +715,12 @@ func SetLogLevel(log_level LogLevel) {
 
 // TLNAPI bool TLN_OpenResourcePack(const char* filename, const char* key);
 func OpenResourcePack(filename string, key string) bool {
-	return convertBool(C.TLN_OpenResourcePack(C.CString(filename), C.CString(key)))
+	cfilename := C.CString(filename)
+	ckey := C.CString(key)
+	defer C.free(cfilename)
+	defer C.free(ckey)
+
+	return convertBool(C.TLN_OpenResourcePack(cfilename, ckey))
 }
 
 // TLNAPI void TLN_CloseResourcePack(void);
