@@ -719,7 +719,6 @@ func OpenResourcePack(filename string, key string) bool {
 	ckey := C.CString(key)
 	defer C.free(unsafe.Pointer(cfilename))
 	defer C.free(unsafe.Pointer(ckey))
-
 	return convertBool(C.TLN_OpenResourcePack(cfilename, ckey))
 }
 
@@ -756,21 +755,25 @@ func GetErrorString(error Error) string {
 // , {
 // TLNAPI bool TLN_CreateWindow (const char* overlay, int flags);
 func CreateWindow(overlay string, flags int) bool {
-	a := convertBool(C.TLN_CreateWindow(C.CString(overlay), CInt(flags)))
-
+	coverlay := C.CString(overlay)
+	defer C.free(unsafe.Pointer(coverlay))
+	a := convertBool(C.TLN_CreateWindow(coverlay, CInt(flags)))
 	return a
 }
 
 // TLNAPI bool TLN_CreateWindowThread (const char* overlay, int flags);
 func CreateWindowThread(overlay string, flags int) bool {
-	a := convertBool(C.TLN_CreateWindowThread(C.CString(overlay), CInt(flags)))
-
+	coverlay := C.CString(overlay)
+	defer C.free(unsafe.Pointer(coverlay))
+	a := convertBool(C.TLN_CreateWindowThread(coverlay, CInt(flags)))
 	return a
 }
 
 // TLNAPI void TLN_SetWindowTitle (const char* title);
 func SetWindowTitle(title string) {
-	C.TLN_SetWindowTitle(C.CString(title))
+	ctitle := C.CString(title)
+	defer C.free(unsafe.Pointer(ctitle))
+	C.TLN_SetWindowTitle(ctitle)
 }
 
 // TLNAPI bool TLN_ProcessWindow (void);
@@ -913,7 +916,9 @@ func CreateSpriteset(bitmap Bitmap, data []SpriteData, num_entries int) Spritese
 
 // TLNAPI TLN_Spriteset TLN_LoadSpriteset (const char* name);
 func LoadSpriteset(name string) Spriteset {
-	return Spriteset{data: C.TLN_LoadSpriteset(C.CString(name))}
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	return Spriteset{data: C.TLN_LoadSpriteset(cname)}
 }
 
 // TLNAPI TLN_Spriteset TLN_CloneSpriteset (TLN_Spriteset src);
@@ -937,7 +942,9 @@ func (spriteset Spriteset) GetSpritesetPalette() Palette {
 
 // TLNAPI int TLN_FindSpritesetSprite (TLN_Spriteset spriteset, const char* name);
 func (spriteset Spriteset) FindSpritesetSprite(name string) int {
-	return int(C.TLN_FindSpritesetSprite(spriteset.data, C.CString(name)))
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	return int(C.TLN_FindSpritesetSprite(spriteset.data, cname))
 }
 
 // TLNAPI bool TLN_SetSpritesetData (TLN_Spriteset spriteset, int entry, TLN_SpriteData* data, void* pixels, int pitch);
@@ -981,7 +988,9 @@ func CreateImageTileset(images []TileImage) Tileset {
 
 // TLNAPI TLN_Tileset TLN_LoadTileset (const char* filename);
 func LoadTileset(filename string) Tileset {
-	return Tileset{data: C.TLN_LoadTileset(C.CString(filename))}
+	cfilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cfilename))
+	return Tileset{data: C.TLN_LoadTileset(cfilename)}
 }
 
 // TLNAPI TLN_Tileset TLN_CloneTileset (TLN_Tileset src);
@@ -1038,11 +1047,14 @@ func CreateTilemap(rows, cols int, tiles []Tile, bgcolor uint32, tileset Tileset
 
 // TLNAPI TLN_Tilemap TLN_LoadTilemap (const char* filename, const char* layername);
 func LoadTilemap(filename string, layername string) Tilemap {
-	(C.CString(filename))
+	cfilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cfilename))
 	if layername == "" {
-		return Tilemap{data: C.TLN_LoadTilemap(C.CString(filename), nil)}
+		return Tilemap{data: C.TLN_LoadTilemap(cfilename, nil)}
 	}
-	return Tilemap{data: C.TLN_LoadTilemap(C.CString(filename), C.CString(layername))}
+	clayername := C.CString(layername)
+	defer C.free(unsafe.Pointer(clayername))
+	return Tilemap{data: C.TLN_LoadTilemap(cfilename, clayername)}
 }
 
 // TLNAPI TLN_Tilemap TLN_CloneTilemap (TLN_Tilemap src);
@@ -1119,7 +1131,9 @@ func CreatePalette(entries int) Palette {
 
 // TLNAPI TLN_Palette TLN_LoadPalette (const char* filename);
 func LoadPalette(filename string) Palette {
-	return Palette{data: C.TLN_LoadPalette(C.CString(filename))}
+	cfilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cfilename))
+	return Palette{data: C.TLN_LoadPalette(cfilename)}
 }
 
 // TLNAPI TLN_Palette TLN_ClonePalette (TLN_Palette src);
@@ -1189,7 +1203,9 @@ func CreateBitmap(width, height, bpp int) Bitmap {
 
 // TLNAPI TLN_Bitmap TLN_LoadBitmap (const char* filename);
 func LoadBitmap(filename string) Bitmap {
-	return Bitmap{data: C.TLN_LoadBitmap(C.CString(filename))}
+	cfilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cfilename))
+	return Bitmap{data: C.TLN_LoadBitmap(cfilename)}
 }
 
 // TLNAPI TLN_Bitmap TLN_CloneBitmap (TLN_Bitmap src);
@@ -1256,10 +1272,14 @@ func (list ObjectList) AddTileObjectToList(id, gid, flags uint16, x, y int) bool
 
 // TLNAPI TLN_ObjectList TLN_LoadObjectList(const char* filename, const char* layername);
 func LoadObjectList(filename string, layername string) ObjectList {
+	cfilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cfilename))
 	if layername == "" {
-		return ObjectList{data: C.TLN_LoadObjectList(C.CString(filename), nil)}
+		return ObjectList{data: C.TLN_LoadObjectList(cfilename, nil)}
 	}
-	return ObjectList{data: C.TLN_LoadObjectList(C.CString(filename), C.CString(layername))}
+	clayername := C.CString(layername)
+	defer C.free(unsafe.Pointer(clayername))
+	return ObjectList{data: C.TLN_LoadObjectList(cfilename, clayername)}
 }
 
 // TLNAPI TLN_ObjectList TLN_CloneObjectList(TLN_ObjectList src);
@@ -1661,7 +1681,9 @@ func (sprite Sprite) GetSpritePalette() Palette {
 // {
 // TLNAPI TLN_Sequence TLN_CreateSequence (const char* name, int target, int num_frames, TLN_SequenceFrame* frames);
 func createSequence(name string, target, num_frames int, frames *C.TLN_SequenceFrame) Sequence {
-	return Sequence{data: C.TLN_CreateSequence(C.CString(name), CInt(target), CInt(num_frames), frames)}
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	return Sequence{data: C.TLN_CreateSequence(cname, CInt(target), CInt(num_frames), frames)}
 }
 
 func CreateSequence(name string, target int, frames []SequenceFrame) Sequence {
@@ -1670,7 +1692,9 @@ func CreateSequence(name string, target int, frames []SequenceFrame) Sequence {
 
 // TLNAPI TLN_Sequence TLN_CreateCycle (const char* name, int num_strips, TLN_ColorStrip* strips);
 func createCycle(name string, num_strips int, strips *C.TLN_ColorStrip) Sequence {
-	return Sequence{data: C.TLN_CreateCycle(C.CString(name), CInt(num_strips), strips)}
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	return Sequence{data: C.TLN_CreateCycle(cname, CInt(num_strips), strips)}
 }
 
 func CreateCycle(name string, strips []ColorStrip) Sequence {
@@ -1679,7 +1703,11 @@ func CreateCycle(name string, strips []ColorStrip) Sequence {
 
 // TLNAPI TLN_Sequence TLN_CreateSpriteSequence(const char* name, TLN_Spriteset spriteset, const char* basename, int delay);
 func CreateSpriteSequence(name string, spriteset Spriteset, basename string, delay int) Sequence {
-	return Sequence{data: C.TLN_CreateSpriteSequence(C.CString(name), spriteset.data, C.CString(basename), CInt(delay))}
+	cname := C.CString(name)
+	cbname := C.CString(basename)
+	defer C.free(unsafe.Pointer(cname))
+	defer C.free(unsafe.Pointer(cbname))
+	return Sequence{data: C.TLN_CreateSpriteSequence(cname, spriteset.data, cbname, CInt(delay))}
 }
 
 // TLNAPI TLN_Sequence TLN_CloneSequence (TLN_Sequence src);
@@ -1716,7 +1744,9 @@ func CreateSequencePack() SequencePack {
 
 // TLNAPI TLN_SequencePack TLN_LoadSequencePack (const char* filename);
 func LoadSequencePack(filename string) SequencePack {
-	return SequencePack{data: C.TLN_LoadSequencePack(C.CString(filename))}
+	cfilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cfilename))
+	return SequencePack{data: C.TLN_LoadSequencePack(cfilename)}
 }
 
 // TLNAPI TLN_Sequence TLN_GetSequence (TLN_SequencePack sp, int index);
@@ -1726,7 +1756,9 @@ func (sp SequencePack) GetSequence(index int) Sequence {
 
 // TLNAPI TLN_Sequence TLN_FindSequence (TLN_SequencePack sp, const char* name);
 func (sp SequencePack) FindSequence(name string) Sequence {
-	return Sequence{data: C.TLN_FindSequence(sp.data, C.CString(name))}
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	return Sequence{data: C.TLN_FindSequence(sp.data, cname)}
 }
 
 // TLNAPI int TLN_GetSequencePackCount (TLN_SequencePack sp);
